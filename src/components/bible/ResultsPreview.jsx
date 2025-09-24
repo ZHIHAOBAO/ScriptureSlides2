@@ -67,7 +67,7 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
                         isCloud: true
                     }));
                     setRecentImages(cloudImages);
-                    console.log('已从云端加载历史图片:', cloudImages.length, '张');
+                    // 已从云端加载历史图片
                     return;
                 }
             } catch (cloudError) {
@@ -93,7 +93,7 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
                 if (validImages.length !== parsedHistory.length) {
                     localStorage.setItem('backgroundImageHistory', JSON.stringify(validImages));
                 }
-                console.log('已从本地存储加载历史图片:', validImages.length, '张');
+                // 已从本地存储加载历史图片
             }
         } catch (e) {
             console.warn("无法加载用户图片", e);
@@ -159,7 +159,7 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
             // 更新状态
             setRecentImages(history);
             
-            console.log('已保存图片到本地历史:', imageData.name);
+            // 已保存图片到本地历史
         } catch (error) {
             console.error('保存图片历史失败:', error);
         }
@@ -176,7 +176,7 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
                         // 批量删除云端图片
                         const deletePromises = images.map(img => UserImage.delete(img.id));
                         await Promise.all(deletePromises);
-                        console.log('已清空云端历史图片:', images.length, '张');
+                        // 已清空云端历史图片
                     }
                 } catch (cloudError) {
                     console.warn('清空云端图片失败，仅清空本地记录:', cloudError);
@@ -188,7 +188,7 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
                 // 清空状态
                 setRecentImages([]);
                 
-                console.log('已清空所有背景图片历史记录');
+                // 已清空所有背景图片历史记录
             } catch (error) {
                 console.error('清空历史记录失败:', error);
                 alert('清空失败，请重试。');
@@ -211,7 +211,7 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
             if (imageToRemove.isCloud && !imageToRemove.id.startsWith('local')) {
                 try {
                     await UserImage.delete(imageToRemove.id);
-                    console.log('已从云端删除图片:', imageToRemove.name);
+                    // 已从云端删除图片
                     // 重新加载云端历史
                     await loadUserImages();
                 } catch (cloudError) {
@@ -234,7 +234,7 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
                     // 更新状态
                     setRecentImages(filteredHistory);
                     
-                    console.log('已从本地历史记录中删除图片:', imageToRemove.name);
+                    // 已从本地历史记录中删除图片
                 }
             }
             
@@ -265,7 +265,7 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
             
             // 尝试上传到云端
             try {
-                console.log('尝试上传图片到云端...');
+                // 尝试上传图片到云端
                 const { file_url } = await UploadFile({ file });
                 
                 if (file_url) {
@@ -278,31 +278,46 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
                         isCloud: true
                     };
                     
-                    // 保存到云端数据库
+                    // 尝试保存到云端数据库
                     try {
                         const savedImage = await UserImage.create({
                             image_url: file_url,
                             name: file.name
                         });
                         cloudImage.id = savedImage.id;
-                        console.log('图片已成功保存到云端:', file.name);
+                        // 图片已成功保存到云端
+                        
+                        onBackgroundChange(cloudImage); // Update parent state
+                        // 重新加载云端历史
+                        await loadUserImages();
+                        // 云端上传成功，已更新历史记录
+                        return;
                     } catch (saveError) {
-                        console.warn('保存到云端数据库失败，但文件上传成功:', saveError);
-                        cloudImage.id = 'cloud-' + Date.now();
+                        console.warn('保存到云端数据库失败，但文件上传成功，转为本地模式:', saveError);
+                        // 如果云端数据库失败，但文件上传成功，转为本地模式处理
+                        const localImageFromCloud = {
+                            preview: file_url.startsWith('blob:') ? file_url : localPreviewUrl,
+                            name: file.name,
+                            size: file.size,
+                            type: file.type,
+                            uploadedAt: new Date().toISOString(),
+                            id: 'local-' + Date.now(),
+                            isLocal: true
+                        };
+                        
+                        // 保存到本地历史记录
+                        saveImageToHistory(localImageFromCloud);
+                        onBackgroundChange(localImageFromCloud); // Update parent state
+                        // 图片处理成功，已保存到本地历史记录
+                        return;
                     }
-
-                    onBackgroundChange(cloudImage); // Update parent state
-                    // 重新加载云端历史
-                    await loadUserImages();
-                    console.log('云端上传成功，已更新历史记录');
-                    return;
                 }
             } catch (cloudError) {
                 console.warn('云端上传失败，使用本地模式:', cloudError);
             }
             
             // 云端上传失败，使用本地模式
-            console.log('使用本地预览模式处理图片');
+            // 使用本地预览模式处理图片
             
             const localImage = {
                 preview: localPreviewUrl,
@@ -318,7 +333,7 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
             saveImageToHistory(localImage);
 
             onBackgroundChange(localImage); // Update parent state
-            console.log('图片处理成功，已保存到历史记录');
+            // 图片处理成功，已保存到历史记录
 
         } catch (err) {
             console.error("上传新背景失败:", err);

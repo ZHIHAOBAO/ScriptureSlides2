@@ -3,7 +3,13 @@
   "private": true,
   "version": "1.0.0",
   "description": "圣经经文幻灯片生成器 - 支持中英文对照的专业演示工具",
-  "keywords": ["bible", "slides", "powerpoint", "scripture", "presentation"],
+  "keywords": [
+    "bible",
+    "slides",
+    "powerpoint",
+    "scripture",
+    "presentation"
+  ],
   "homepage": "https://scripture-slides.vercel.app",
   "type": "module",
   "scripts": {

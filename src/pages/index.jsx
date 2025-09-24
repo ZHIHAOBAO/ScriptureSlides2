@@ -1,16 +1,11 @@
 import Layout from "./Layout.jsx";
 
 import BiblePowerPoint from "./BiblePowerPoint";
-import TestPage from "./TestPage";
-import SimplePage from "./SimplePage";
 
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 
 const PAGES = {
-    
-    BiblePowerPoint: BiblePowerPoint,
-    TestPage: TestPage,
-    
+    BiblePowerPoint: BiblePowerPoint
 }
 
 function _getCurrentPage(url) {
@@ -33,15 +28,9 @@ function PagesContent() {
     
     return (
         <Layout currentPageName={currentPage}>
-            <Routes>            
-                
-                    <Route path="/" element={<BiblePowerPoint />} />
-                
-                
+            <Routes>
+                <Route path="/" element={<BiblePowerPoint />} />
                 <Route path="/BiblePowerPoint" element={<BiblePowerPoint />} />
-                <Route path="/test" element={<TestPage />} />
-                <Route path="/simple" element={<SimplePage />} />
-                
             </Routes>
         </Layout>
     );

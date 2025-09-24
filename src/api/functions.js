@@ -64,7 +64,7 @@ const fetchFromBollsAPI = async (bookName, chapter, startVerse, endVerse) => {
       throw new Error(`Book "${bookName}" not found`);
     }
 
-    console.log(`Fetching from bolls.life API: ${bookName} (ID: ${bookId}), Chapter: ${chapter}, Verses: ${startVerse}-${endVerse}`);
+    // Fetching from bolls.life API
 
     // Fetch English verses (KJV - King James Version)
     const englishResponse = await fetch(`https://bolls.life/get-text/KJV/${bookId}/${chapter}/`, {
@@ -78,8 +78,9 @@ const fetchFromBollsAPI = async (bookName, chapter, startVerse, endVerse) => {
     let englishVerses = [];
     if (englishResponse.ok) {
       const englishData = await englishResponse.json();
-      console.log('English data received:', englishData.length, 'verses');
-      englishVerses = englishData.filter(v => v.verse >= startVerse && v.verse <= endVerse);
+      // English data received
+      // Filter verses based on the requested range, but also consider available verses
+      englishVerses = englishData.filter(v => v.verse >= startVerse && (endVerse >= 200 ? true : v.verse <= endVerse));
     } else {
       console.warn('Failed to fetch English verses:', englishResponse.status);
     }
@@ -96,38 +97,60 @@ const fetchFromBollsAPI = async (bookName, chapter, startVerse, endVerse) => {
     let chineseVerses = [];
     if (chineseResponse.ok) {
       const chineseData = await chineseResponse.json();
-      console.log('Chinese data received:', chineseData.length, 'verses');
-      chineseVerses = chineseData.filter(v => v.verse >= startVerse && v.verse <= endVerse);
+      // Chinese data received
+      // Filter verses based on the requested range, but also consider available verses
+      chineseVerses = chineseData.filter(v => v.verse >= startVerse && (endVerse >= 200 ? true : v.verse <= endVerse));
     } else {
       console.warn('Failed to fetch Chinese verses:', chineseResponse.status);
     }
 
     // Combine English and Chinese verses
     const verses = [];
-    for (let verseNum = startVerse; verseNum <= endVerse; verseNum++) {
-      const englishVerse = englishVerses.find(v => v.verse === verseNum);
-      const chineseVerse = chineseVerses.find(v => v.verse === verseNum);
-      
-      // Clean HTML tags and Strong's numbers from text
-      const cleanText = (text) => {
-        if (!text) return '';
-        return text
-          .replace(/<S>\d+<\/S>/g, '') // Remove Strong's numbers like <S>1161</S>
-          .replace(/<[^>]*>/g, '') // Remove all other HTML tags
-          .replace(/\s+/g, ' ') // Replace multiple spaces with single space
-          .trim(); // Remove leading/trailing spaces
-      };
-      
-      verses.push({
-        chapter_number: chapter,
-        verse_number: verseNum,
-        full_reference: `${chapter}:${verseNum}`,
-        text: chineseVerse ? cleanText(chineseVerse.text) : `${bookName} ${chapter}:${verseNum} (中文经文不可用)`,
-        text_english: englishVerse ? cleanText(englishVerse.text) : `${bookName} ${chapter}:${verseNum} (English text not available)`
-      });
+    
+    // Determine the actual verse range based on available data
+    const availableVerses = new Set();
+    englishVerses.forEach(v => availableVerses.add(v.verse));
+    chineseVerses.forEach(v => availableVerses.add(v.verse));
+    
+    // If no verses found in range, try to get all available verses
+    if (availableVerses.size === 0) {
+      // Get all available verses from both translations
+      englishVerses.forEach(v => availableVerses.add(v.verse));
+      chineseVerses.forEach(v => availableVerses.add(v.verse));
+    }
+    
+    // Sort available verses and use them as the range
+    const sortedVerses = Array.from(availableVerses).sort((a, b) => a - b);
+    const actualStartVerse = Math.max(startVerse, Math.min(...sortedVerses));
+    const actualEndVerse = Math.min(endVerse, Math.max(...sortedVerses));
+    
+    for (let verseNum = actualStartVerse; verseNum <= actualEndVerse; verseNum++) {
+      // Only process verses that actually exist in the data
+      if (availableVerses.has(verseNum)) {
+        const englishVerse = englishVerses.find(v => v.verse === verseNum);
+        const chineseVerse = chineseVerses.find(v => v.verse === verseNum);
+        
+        // Clean HTML tags and Strong's numbers from text
+        const cleanText = (text) => {
+          if (!text) return '';
+          return text
+            .replace(/<S>\d+<\/S>/g, '') // Remove Strong's numbers like <S>1161</S>
+            .replace(/<[^>]*>/g, '') // Remove all other HTML tags
+            .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+            .trim(); // Remove leading/trailing spaces
+        };
+        
+        verses.push({
+          chapter_number: chapter,
+          verse_number: verseNum,
+          full_reference: `${chapter}:${verseNum}`,
+          text: chineseVerse ? cleanText(chineseVerse.text) : `${bookName} ${chapter}:${verseNum} (中文经文不可用)`,
+          text_english: englishVerse ? cleanText(englishVerse.text) : `${bookName} ${chapter}:${verseNum} (English text not available)`
+        });
+      }
     }
 
-    console.log('Successfully processed', verses.length, 'verses from bolls.life API');
+    // Successfully processed verses from bolls.life API
     return verses;
   } catch (error) {
     console.error('Error fetching from Bolls API:', error);
@@ -143,7 +166,7 @@ export const fetchBibleContent = async (params) => {
             throw new Error('缺少必要的参数：书卷缩写和章节号');
         }
 
-        console.log('开始获取圣经内容:', params);
+        // 开始获取圣经内容
         
         // Convert book abbreviation to full name for bolls.life API
         let bookName = null;
@@ -160,16 +183,24 @@ export const fetchBibleContent = async (params) => {
         
         // Try bolls.life API first
         try {
-            console.log('正在尝试 bolls.life API...');
+            // 正在尝试 bolls.life API
+            
+            // First, get all available verses for the chapter to determine the actual range
+            let actualEndVerse = params.end_verse;
+            if (!actualEndVerse || actualEndVerse > 200) {
+                // If end_verse is not specified or too large, we'll determine it from the API response
+                actualEndVerse = 200; // Set a reasonable upper limit for initial fetch
+            }
+            
             const bollsVerses = await fetchFromBollsAPI(
                 bookName,
                 params.chapter,
                 params.start_verse || 1,
-                params.end_verse || 999
+                actualEndVerse
             );
             
             if (bollsVerses && bollsVerses.length > 0) {
-                console.log('bolls.life API成功获取经文数据:', bollsVerses.length, '节');
+                // bolls.life API成功获取经文数据
                 return {
                     data: { verses: bollsVerses },
                     error: null

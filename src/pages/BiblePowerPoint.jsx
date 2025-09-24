@@ -81,7 +81,7 @@ export default function BiblePowerPointPage() {
     const loadRecentPresentations = async () => {
         try {
             // 使用降级模式，直接返回空数组
-            console.log('使用降级模式，跳过历史演示文稿加载');
+            // 使用降级模式，跳过历史演示文稿加载
             setRecentPresentations([]);
             return;
             
@@ -231,7 +231,7 @@ export default function BiblePowerPointPage() {
                 
                 // 如果主要背景加载失败，尝试备选背景
                 if (!backgroundBase64) {
-                    console.log("主背景加载失败，尝试备选背景...");
+                    // 主背景加载失败，尝试备选背景
                     for (const altBg of backgroundImages.alternativeBackgrounds) {
                         backgroundBase64 = await getImageAsBase64(altBg);
                         if (backgroundBase64) break;
@@ -432,7 +432,7 @@ export default function BiblePowerPointPage() {
             const fileName = `${safeFileName}-纯背景版.pptx`;
             
             await pptx.writeFile({ fileName });
-            console.log("纯背景双语PPTX文件生成成功！");
+            // 纯背景双语PPTX文件生成成功
 
         } catch (err) {
             console.error("生成PPTX时出错:", err);

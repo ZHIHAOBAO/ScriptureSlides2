@@ -47,7 +47,7 @@ export default function BackgroundGallery({ isOpen, onClose, onSelectBackground,
     setLoading(true);
     try {
       // 使用降级模式，直接返回空数组
-      console.log('使用降级模式，跳过社区图片加载');
+      // 使用降级模式，跳过社区图片加载
       setCommunityImages([]);
     } catch (error) {
       console.error("加载社区背景图片失败:", error);
