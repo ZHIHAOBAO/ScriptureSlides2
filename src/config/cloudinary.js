@@ -15,9 +15,19 @@ export const isCloudinaryConfigured = () => {
   console.log('API Key:', CLOUDINARY_CONFIG.api_key);
   console.log('环境变量 VITE_CLOUDINARY_CLOUD_NAME:', import.meta.env.VITE_CLOUDINARY_CLOUD_NAME);
   console.log('环境变量 VITE_CLOUDINARY_UPLOAD_PRESET:', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
+  console.log('环境变量 VITE_CLOUDINARY_API_KEY:', import.meta.env.VITE_CLOUDINARY_API_KEY);
   
   const isConfigured = !!(CLOUDINARY_CONFIG.cloud_name && CLOUDINARY_CONFIG.upload_preset);
   console.log('配置状态:', isConfigured);
+  
+  // 显示详细的配置缺失信息
+  if (!isConfigured) {
+    const missing = [];
+    if (!CLOUDINARY_CONFIG.cloud_name) missing.push('VITE_CLOUDINARY_CLOUD_NAME');
+    if (!CLOUDINARY_CONFIG.upload_preset) missing.push('VITE_CLOUDINARY_UPLOAD_PRESET');
+    console.error('缺失的环境变量:', missing.join(', '));
+    console.error('请在 Vercel 项目设置中添加这些环境变量');
+  }
   
   return isConfigured;
 };

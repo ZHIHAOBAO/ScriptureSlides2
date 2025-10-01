@@ -24,5 +24,6 @@ export default defineConfig({
   },
   define: {
     global: 'globalThis',
+    'import.meta.env.VITE_BUILD_TIME': JSON.stringify(new Date().toISOString()),
   },
 }) 

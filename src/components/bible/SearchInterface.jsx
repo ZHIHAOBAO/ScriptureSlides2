@@ -21,6 +21,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import ImageErrorBoundary from "../ui/ImageErrorBoundary";
 import { UserImage, User } from "@/api/entities";
+import ConfigChecker from "../ConfigChecker";
 
 const BIBLE_SUGGESTIONS = [
 // 旧约
@@ -634,6 +635,9 @@ export default function SearchInterface({ searchQuery, setSearchQuery, onGenerat
           }
                 </CardContent>
             </Card>
+
+            {/* Cloudinary 配置检查器 */}
+            <ConfigChecker />
 
             <Card className="border-0 bg-gradient-to-r from-blue-50 to-green-50 p-6">
                 <div className="grid md:grid-cols-3 gap-6 text-center">
