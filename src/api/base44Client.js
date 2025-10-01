@@ -1,4 +1,4 @@
-import { createClient } from '@base44/sdk';
+// import { createClient } from '@base44/sdk';
 // import { getAccessToken } from '@base44/sdk/utils/auth-utils';
 
 // 创建一个完全去除认证的客户端包装器
