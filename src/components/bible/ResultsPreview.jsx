@@ -60,12 +60,13 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
                 if (images && images.length > 0) {
                     const cloudImages = images.map(img => ({
                         id: img.id,
-                        preview: img.image_url,
-                        name: img.name || '未命名图片',
+                        preview: img.file_url || img.image_url, // 支持两种字段名
+                        name: img.filename || img.name || '未命名图片',
                         addedAt: img.created_at,
                         lastUsed: img.updated_at || img.created_at,
                         isCloud: true
                     }));
+                    console.log('从云端加载的图片:', cloudImages);
                     setRecentImages(cloudImages);
                     // 已从云端加载历史图片
                     return;
@@ -595,7 +596,7 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
                                                     {/* Recent Images */}
                                                     {recentImages.map((image, index) => (
                                                         <div
-                                                            key={image.id || index}
+                                                            key={image.id || `results-image-${index}-${image.name}`}
                                                             onClick={() => { selectHistoryImage(image) }}
                                                             className={`group relative aspect-square rounded-md overflow-hidden cursor-pointer border-2 transition-all transform hover:scale-105 ${
                                                                 presentation.customBackgroundImage?.preview === image.preview

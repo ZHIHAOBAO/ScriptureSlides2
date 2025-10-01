@@ -14,17 +14,13 @@ import {
   Lightbulb,
   AlertCircle,
   Clock,
-  Upload,
-  Image,
   X,
   History,
   Book
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import BackgroundGallery from "./BackgroundGallery";
 import ImageErrorBoundary from "../ui/ImageErrorBoundary";
 import { UserImage, User } from "@/api/entities";
-import { UploadFile } from "@/api/integrations";
 
 const BIBLE_SUGGESTIONS = [
 // 旧约
@@ -55,9 +51,7 @@ const POPULAR_CHAPTERS = [
 export default function SearchInterface({ searchQuery, setSearchQuery, onGenerate, error, recentPresentations, onRecentSelect }) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
-  const [uploadedImage, setUploadedImage] = useState(null); // Will store { preview, name, id }
   const [uploading, setUploading] = useState(false);
-  const [isDragOver, setIsDragOver] = useState(false);
   const [recentImages, setRecentImages] = useState([]); // Stores { preview, name, id }
   const [showBackgroundGallery, setShowBackgroundGallery] = useState(false);
   const [localError, setLocalError] = useState(null); // 本地错误状态
@@ -128,12 +122,13 @@ export default function SearchInterface({ searchQuery, setSearchQuery, onGenerat
         if (images && images.length > 0) {
           const cloudImages = images.map(img => ({
             id: img.id,
-            preview: img.image_url,
-            name: img.name || '未命名图片',
+            preview: img.file_url || img.image_url, // 支持两种字段名
+            name: img.filename || img.name || '未命名图片',
             addedAt: img.created_at,
             lastUsed: img.updated_at || img.created_at,
             isCloud: true
           }));
+          console.log('从云端加载的图片:', cloudImages);
           setRecentImages(cloudImages);
           return;
         }
@@ -392,7 +387,13 @@ export default function SearchInterface({ searchQuery, setSearchQuery, onGenerat
   };
 
   const selectRecentImage = (image) => {
-    setUploadedImage(image); // `image` now contains `id`
+    // 直接使用历史图片生成 PowerPoint
+    if (searchQuery.trim()) {
+      onGenerate(searchQuery.trim(), "elegant", image);
+      setShowSuggestions(false);
+    } else {
+      alert('请先输入经文查询');
+    }
   };
   
   const removeRecentImage = async (imageToRemove, event) => {
@@ -435,18 +436,12 @@ export default function SearchInterface({ searchQuery, setSearchQuery, onGenerat
       }
       
       // 如果当前选中的图片被删除，清除选中状态
-      if (uploadedImage && uploadedImage.id === imageToRemove.id) {
-        setUploadedImage(null);
-      }
+      // 不再需要这部分逻辑，因为不再有 uploadedImage 状态
       
     } catch (error) {
       console.error("删除历史图片失败:", error);
       alert('删除历史图片失败，请重试。');
     }
-  };
-
-  const removeUploadedImage = () => {
-    setUploadedImage(null);
   };
 
   // 清空所有历史记录
@@ -472,23 +467,11 @@ export default function SearchInterface({ searchQuery, setSearchQuery, onGenerat
         // 清空状态
         setRecentImages([]);
         
-        // 如果当前选中的是历史图片，也清除
-        if (uploadedImage && uploadedImage.id) {
-          setUploadedImage(null);
-        }
-        
         // 已清空所有背景图片历史记录
       } catch (error) {
         console.error('清空历史记录失败:', error);
         alert('清空失败，请重试。');
       }
-    }
-  };
-
-  const handleGenerateWithImage = () => {
-    if (searchQuery.trim()) {
-      onGenerate(searchQuery.trim(), "elegant", uploadedImage);
-      setShowSuggestions(false);
     }
   };
 
@@ -500,7 +483,7 @@ export default function SearchInterface({ searchQuery, setSearchQuery, onGenerat
                         创建您的圣经演示文稿
                     </CardTitle>
                     <p className="text-gray-600 text-lg mt-2">
-                        输入具体的圣经章节，并可选择上传背景图片
+                        输入具体的经文章节，快速生成PPT演示文稿
                     </p>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -534,7 +517,7 @@ export default function SearchInterface({ searchQuery, setSearchQuery, onGenerat
                     }
                                             {suggestions.map((suggestion, index) =>
                     <div
-                      key={index}
+                      key={`suggestion-${suggestion}-${index}`}
                       onClick={() => handleSelectSuggestion(suggestion)}
                       className={`px-4 py-3 cursor-pointer transition-colors flex items-center gap-3 ${
                       index === selectedIndex ?
@@ -552,112 +535,10 @@ export default function SearchInterface({ searchQuery, setSearchQuery, onGenerat
                             </AnimatePresence>
                         </div>
 
-                        {/* 背景图片上传区域 - 支持拖拽 */}
+                        {/* 历史图片区域 - 只有当有图片时才显示 */}
+                        {recentImages.length > 0 && (
                         <ImageErrorBoundary>
                         <div className="bg-gray-50 rounded-xl p-4">
-                            <div className="flex items-center justify-between mb-3">
-                                <div className="flex items-center gap-2">
-                                    <Image className="w-5 h-5 text-gray-600" />
-                                    <span className="font-medium text-gray-700">自定义背景图片（可选）</span>
-                                </div>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setShowBackgroundGallery(true)}
-                                    className="flex items-center gap-2"
-                                >
-                                    <Sparkles className="w-4 h-4" />
-                                    社区图库
-                                </Button>
-                            </div>
-                            
-                            {!uploadedImage ?
-              <div
-                className={`border-2 border-dashed rounded-lg p-6 text-center transition-all duration-200 ${
-                isDragOver ?
-                'border-blue-500 bg-blue-50 scale-105' :
-                'border-gray-300 hover:border-blue-400'}`
-                }
-                onDragEnter={handleDragEnter}
-                onDragLeave={handleDragLeave}
-                onDragOver={handleDragOver}
-                onDrop={handleDrop}>
-
-                                    <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                  id="image-upload"
-                  disabled={uploading} />
-
-                                    <label htmlFor="image-upload" className="cursor-pointer block">
-                                        <motion.div
-                    animate={isDragOver ? { scale: 1.1 } : { scale: 1 }}
-                    transition={{ duration: 0.2 }}>
-
-                                            <Upload className={`w-8 h-8 mx-auto mb-2 ${isDragOver ? 'text-blue-500' : 'text-gray-400'}`} />
-                                        </motion.div>
-                                        
-                                    {uploading ?
-                  <div className="flex items-center justify-center gap-2">
-                                                <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                                                <p className="text-blue-600 font-medium">正在处理图片...</p>
-                                            </div> :
-
-                  <>
-                                                <p className={`font-medium mb-1 ${isDragOver ? 'text-blue-700' : 'text-gray-600'}`}>
-                                                    {isDragOver ? '放开以上传图片' : '点击上传或拖拽图片到此处'}
-                                                </p>
-                                                <p className="text-xs text-gray-500 mb-2">
-                                                    支持 JPG、PNG 格式，最大 5MB
-                                                </p>
-
-                                            </>
-                  }
-                                    </label>
-                                </div> :
-
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="relative">
-
-                                    <div className="flex items-center gap-4 bg-white rounded-lg p-4 border border-blue-200 bg-blue-50">
-                                        <img
-                    src={uploadedImage.preview}
-                    alt="预览" 
-                    className="bg-blue-100 w-16 h-16 object-cover rounded-lg border-2 border-blue-100"
-                    onError={(e) => {
-                      console.warn('图片加载失败:', uploadedImage.preview);
-                      e.target.style.display = 'none';
-                    }}
-                  />
-
-
-                                        <div className="flex-1">
-                                            <p className="font-medium text-gray-900 flex items-center gap-2">
-                                                <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                                                {uploadedImage.name}
-                                            </p>
-                                            <p className="text-sm text-blue-700">已选择为PPT背景图片</p>
-                                        </div>
-                                        <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={removeUploadedImage}
-                    className="text-gray-400 hover:text-red-500">
-
-                                            <X className="w-4 h-4" />
-                                        </Button>
-                                    </div>
-                                </motion.div>
-              }
-
-              {/* 历史图片区域 - 只有当有图片时才显示 */}
-              {recentImages.length > 0 && (
                 <div className="mt-4 pt-4 border-t border-gray-200">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
@@ -681,29 +562,28 @@ export default function SearchInterface({ searchQuery, setSearchQuery, onGenerat
                   <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
                     {recentImages.map((image, index) => (
                       <div 
-                        key={image.id || index}
+                        key={image.id || `recent-image-${index}-${image.name}`}
                         onClick={() => selectRecentImage(image)} 
-                        className={`relative group aspect-w-1 aspect-h-1 rounded-md overflow-hidden cursor-pointer border-2 transition-all transform hover:scale-105 ${uploadedImage?.id === image.id ? 'border-blue-500 ring-2 ring-blue-200 shadow-lg' : 'border-transparent hover:border-blue-400 hover:shadow-md'}`}
+                        className={`relative group aspect-w-1 aspect-h-1 rounded-md overflow-hidden cursor-pointer border-2 transition-all transform hover:scale-105 border-transparent hover:border-blue-400 hover:shadow-md`}
                       >
                         <img 
                           src={image.preview} 
                           alt={image.name} 
                           className="w-full h-full object-cover"
+                          onLoad={() => {
+                            console.log('最近使用的背景图片加载成功:', image.name, image.preview);
+                          }}
                           onError={(e) => {
-                            console.warn('历史图片加载失败:', image.preview);
+                            console.warn('最近使用的背景图片加载失败:', {
+                              name: image.name,
+                              preview: image.preview,
+                              src: e.target.src
+                            });
                             e.target.style.display = 'none';
+                            e.target.parentNode.innerHTML = '<div class="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs p-1">点击图片快速选择，意停查看详情</div>';
                           }}
                         />
                         <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all"></div>
-                        
-                        {/* 选中状态指示器 */}
-                        {uploadedImage?.id === image.id && (
-                          <div className="absolute top-1 left-1 p-0.5 bg-blue-500 rounded-full text-white">
-                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
-                          </div>
-                        )}
                         
                         {/* 图片信息悬浮提示 */}
                         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -731,18 +611,18 @@ export default function SearchInterface({ searchQuery, setSearchQuery, onGenerat
                     点击图片快速选择，悬停查看详情
                   </div>
                 </div>
-              )}
             </div>
             </ImageErrorBoundary>
+            )}
 
             <Button
               type="button"
-              onClick={uploadedImage ? handleGenerateWithImage : handleSubmit}
+              onClick={handleSubmit}
               className="w-full h-14 text-lg bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white rounded-xl"
               disabled={!searchQuery.trim() || uploading}>
 
                             <Sparkles className="w-5 h-5 mr-2" />
-                            {uploading ? '处理中...' : uploadedImage ? '使用自定义背景生成PowerPoint' : '生成PowerPoint'}
+                            {uploading ? '处理中...' : '生成PowerPoint'}
                         </Button>
                     </form>
 
@@ -782,16 +662,15 @@ export default function SearchInterface({ searchQuery, setSearchQuery, onGenerat
                 
 
             </Card>
-
-            <BackgroundGallery
-                isOpen={showBackgroundGallery}
-                onClose={() => setShowBackgroundGallery(false)}
-                onSelectBackground={setUploadedImage}
-                currentBackground={uploadedImage?.preview}
-            />
         </div>);
 
 }
+
+
+
+
+
+
 
 
 
