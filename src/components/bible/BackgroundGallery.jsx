@@ -299,6 +299,8 @@ export default function BackgroundGallery({ isOpen, onClose, onSelectBackground,
     
     if (imageUrl && onSelectBackground) {
       onSelectBackground(imageUrl);
+      // 选择背景图片后关闭对话框
+      onClose();
     }
   };
 
