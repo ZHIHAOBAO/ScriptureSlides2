@@ -32,7 +32,7 @@ const SlidePreview = ({ slide, backgroundImage, isTitleSlide }) => {
                         <h1 className="text-[5vmin] font-bold" style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.5)' }}>
                             {titleChinese.trim()}
                         </h1>
-                        {titleEnglish && (
+                        {titleEnglish && titleEnglish.trim() && (
                             <h2 className="text-[3vmin] font-normal mt-4" style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.5)' }}>
                                 {titleEnglish.trim()}
                             </h2>

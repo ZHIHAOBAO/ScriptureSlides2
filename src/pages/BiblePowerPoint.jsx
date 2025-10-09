@@ -96,8 +96,8 @@ export default function BiblePowerPointPage() {
         const slides = [
             {
                 type: "title",
-                title: searchResult.overall_theme, // e.g., "使徒行传2:43-3:10 研读 ||| Acts 2:43-3:10 Study"
-                content: searchResult.full_reference, // e.g., "使徒行传 2:43-3:10 ||| Acts 2:43-3:10"
+                title: searchResult.full_reference, // 使用完整引用作为标题（包含中英文）
+                content: "", // 标题页不需要内容
                 reference: ""
             }
         ];

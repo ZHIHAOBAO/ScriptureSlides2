@@ -14,13 +14,9 @@ import {
   Lightbulb,
   AlertCircle,
   Clock,
-  X,
-  History,
   Book
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import ImageErrorBoundary from "../ui/ImageErrorBoundary";
-import { UserImage, User } from "@/api/entities";
 
 const BIBLE_SUGGESTIONS = [
 // 旧约
@@ -52,115 +48,7 @@ export default function SearchInterface({ searchQuery, setSearchQuery, onGenerat
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [uploading, setUploading] = useState(false);
-  const [recentImages, setRecentImages] = useState([]); // Stores { preview, name, id }
-  const [showBackgroundGallery, setShowBackgroundGallery] = useState(false);
   const [localError, setLocalError] = useState(null); // 本地错误状态
-
-  useEffect(() => {
-    // Load user's persistent images
-    loadUserImages();
-  }, []);
-
-  // 保存图片到本地历史记录
-  const saveImageToHistory = (imageData) => {
-    try {
-      const historyKey = 'backgroundImageHistory';
-      let history = [];
-      
-      // 获取现有历史
-      const existingHistory = localStorage.getItem(historyKey);
-      if (existingHistory) {
-        history = JSON.parse(existingHistory);
-      }
-      
-      // 检查是否已存在（根据name和preview判断）
-      const existingIndex = history.findIndex(item => 
-        item.name === imageData.name || item.preview === imageData.preview
-      );
-      
-      if (existingIndex > -1) {
-        // 如果已存在，更新时间并移动到前面
-        history[existingIndex] = {
-          ...history[existingIndex],
-          ...imageData,
-          lastUsed: new Date().toISOString()
-        };
-        // 移动到数组前面
-        const item = history.splice(existingIndex, 1)[0];
-        history.unshift(item);
-      } else {
-        // 新增到前面
-        history.unshift({
-          ...imageData,
-          id: 'local_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-          addedAt: new Date().toISOString(),
-          lastUsed: new Date().toISOString()
-        });
-      }
-      
-      // 限制最多保存10张图片
-      if (history.length > 10) {
-        history = history.slice(0, 10);
-      }
-      
-      // 保存到localStorage
-      localStorage.setItem(historyKey, JSON.stringify(history));
-      
-      // 更新状态
-      setRecentImages(history);
-      
-    } catch (error) {
-      console.error('保存图片历史失败:', error);
-    }
-  };
-
-  const loadUserImages = async () => {
-    try {
-      // 优先尝试从云端加载
-      try {
-        const images = await UserImage.list();
-        if (images && images.length > 0) {
-          const cloudImages = images.map(img => ({
-            id: img.id,
-            preview: img.file_url || img.image_url, // 支持两种字段名
-            name: img.filename || img.name || '未命名图片',
-            addedAt: img.created_at,
-            lastUsed: img.updated_at || img.created_at,
-            isCloud: true
-          }));
-          console.log('从云端加载的图片:', cloudImages);
-          setRecentImages(cloudImages);
-          return;
-        }
-      } catch (cloudError) {
-        // 云端加载失败，使用本地存储
-      }
-      
-      // 云端加载失败时，回退到本地存储
-      const localHistory = localStorage.getItem('backgroundImageHistory');
-      if (localHistory) {
-        const parsedHistory = JSON.parse(localHistory);
-        // 验证历史记录是否仍然有效（图片URL是否可访问）
-        const validImages = [];
-        for (const image of parsedHistory) {
-          // 对于blob URL，检查是否仍然存在
-          if (image.preview && image.preview.startsWith('blob:')) {
-            // Blob URL在页面刷新后会失效，我们跳过这些
-            continue;
-          }
-          validImages.push(image);
-        }
-        setRecentImages(validImages);
-        // 更新localStorage，移除无效的记录
-        if (validImages.length !== parsedHistory.length) {
-          localStorage.setItem('backgroundImageHistory', JSON.stringify(validImages));
-        }
-      }
-    } catch (e) {
-      console.warn("无法加载用户图片", e);
-      setRecentImages([]);
-    }
-  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -386,95 +274,6 @@ export default function SearchInterface({ searchQuery, setSearchQuery, onGenerat
     e.stopPropagation();
   };
 
-  const selectRecentImage = (image) => {
-    // 直接使用历史图片生成 PowerPoint
-    if (searchQuery.trim()) {
-      onGenerate(searchQuery.trim(), "elegant", image);
-      setShowSuggestions(false);
-    } else {
-      alert('请先输入经文查询');
-    }
-  };
-  
-  const removeRecentImage = async (imageToRemove, event) => {
-    event.stopPropagation();
-    
-    if (!imageToRemove.id) {
-      console.error("图片ID不存在，无法删除:", imageToRemove);
-      alert('删除失败：图片ID缺失，请刷新页面重试。');
-      return;
-    }
-
-    try {
-      // 如果是云端图片，先从云端删除
-      if (imageToRemove.isCloud && !imageToRemove.id.startsWith('local')) {
-        try {
-          await UserImage.delete(imageToRemove.id);
-          // 已从云端删除图片
-          // 重新加载云端历史
-          await loadUserImages();
-        } catch (cloudError) {
-          console.error('从云端删除失败:', cloudError);
-          alert('从云端删除失败，请重试。');
-          return;
-        }
-      } else {
-        // 从本地存储中删除
-        const historyKey = 'backgroundImageHistory';
-        const existingHistory = localStorage.getItem(historyKey);
-        
-        if (existingHistory) {
-          const history = JSON.parse(existingHistory);
-          const filteredHistory = history.filter(img => img.id !== imageToRemove.id);
-          
-          // 更新localStorage
-          localStorage.setItem(historyKey, JSON.stringify(filteredHistory));
-          
-          // 更新状态
-          setRecentImages(filteredHistory);
-        }
-      }
-      
-      // 如果当前选中的图片被删除，清除选中状态
-      // 不再需要这部分逻辑，因为不再有 uploadedImage 状态
-      
-    } catch (error) {
-      console.error("删除历史图片失败:", error);
-      alert('删除历史图片失败，请重试。');
-    }
-  };
-
-  // 清空所有历史记录
-  const clearImageHistory = async () => {
-    if (window.confirm('确定要清空所有背景图片历史记录吗？')) {
-      try {
-        // 尝试清空云端图片
-        try {
-          const images = await UserImage.list();
-          if (images && images.length > 0) {
-            // 批量删除云端图片
-            const deletePromises = images.map(img => UserImage.delete(img.id));
-            await Promise.all(deletePromises);
-            // 已清空云端历史图片
-          }
-        } catch (cloudError) {
-          console.warn('清空云端图片失败，仅清空本地记录:', cloudError);
-        }
-        
-        // 清空本地存储
-        localStorage.removeItem('backgroundImageHistory');
-        
-        // 清空状态
-        setRecentImages([]);
-        
-        // 已清空所有背景图片历史记录
-      } catch (error) {
-        console.error('清空历史记录失败:', error);
-        alert('清空失败，请重试。');
-      }
-    }
-  };
-
   return (
     <div className="space-y-8">
             <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
@@ -535,87 +334,7 @@ export default function SearchInterface({ searchQuery, setSearchQuery, onGenerat
                             </AnimatePresence>
                         </div>
 
-                        {/* 历史图片区域 - 只有当有图片时才显示 */}
-                        {recentImages.length > 0 && (
-                        <ImageErrorBoundary>
-                        <div className="bg-gray-50 rounded-xl p-4">
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <History className="w-4 h-4 text-gray-600" />
-                      <h4 className="text-sm font-medium text-gray-700">最近使用的背景</h4>
-                      <Badge variant="secondary" className="text-xs">
-                        {recentImages.length}
-                      </Badge>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={clearImageHistory}
-                      className="text-xs text-gray-500 hover:text-red-500 h-6 px-2"
-                      title="清空历史记录"
-                    >
-                      清空
-                    </Button>
-                  </div>
-                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
-                    {recentImages.map((image, index) => (
-                      <div 
-                        key={image.id || `recent-image-${index}-${image.name}`}
-                        onClick={() => selectRecentImage(image)} 
-                        className={`relative group aspect-w-1 aspect-h-1 rounded-md overflow-hidden cursor-pointer border-2 transition-all transform hover:scale-105 border-transparent hover:border-blue-400 hover:shadow-md`}
-                      >
-                        <img 
-                          src={image.preview} 
-                          alt={image.name} 
-                          className="w-full h-full object-cover"
-                          onLoad={() => {
-                            console.log('最近使用的背景图片加载成功:', image.name, image.preview);
-                          }}
-                          onError={(e) => {
-                            console.warn('最近使用的背景图片加载失败:', {
-                              name: image.name,
-                              preview: image.preview,
-                              src: e.target.src
-                            });
-                            e.target.style.display = 'none';
-                            e.target.parentNode.innerHTML = '<div class="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs p-1">点击图片快速选择，意停查看详情</div>';
-                          }}
-                        />
-                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all"></div>
-                        
-                        {/* 图片信息悬浮提示 */}
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <p className="text-white text-xs truncate" title={image.name}>
-                            {image.name}
-                          </p>
-                          {image.addedAt && (
-                            <p className="text-white/80 text-xs">
-                              {new Date(image.addedAt).toLocaleDateString()}
-                            </p>
-                          )}
-                        </div>
-                        
-                        <button 
-                          onClick={(e) => removeRecentImage(image, e)}
-                          className="absolute top-1 right-1 p-0.5 bg-white/70 hover:bg-white rounded-full text-gray-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                          aria-label="删除此历史图片"
-                        >
-                          <X className="w-3 h-3"/>
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-2 text-xs text-gray-500 text-center">
-                    点击图片快速选择，悬停查看详情
-                  </div>
-                </div>
-            </div>
-            </ImageErrorBoundary>
-            )}
-
-            <Button
+                        <Button
               type="button"
               onClick={handleSubmit}
               className="w-full h-14 text-lg bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white rounded-xl"
