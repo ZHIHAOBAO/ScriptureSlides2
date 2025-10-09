@@ -20,8 +20,6 @@ class ErrorBoundary extends React.Component {
     });
     
     // 记录错误信息
-    console.error('应用错误:', error);
-    console.error('错误详情:', errorInfo);
   }
 
   handleRetry = () => {

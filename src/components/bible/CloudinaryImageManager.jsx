@@ -165,7 +165,7 @@ export default function CloudinaryImageManager({
         }
       } else {
         // 使用现有的 UploadFile API（本地存储）
-        console.log('使用本地存储上传...');
+        // 使用本地存储上传
         if (typeof onUpload === 'function') {
           // 让父组件处理本地上传逻辑
           await onUpload(file);
@@ -174,7 +174,7 @@ export default function CloudinaryImageManager({
         }
       }
     } catch (error) {
-      console.error('Upload failed:', error);
+      // 上传失败
       setUploadError(error.message || '上传失败，请重试');
     } finally {
       setIsUploading(false);
@@ -190,7 +190,7 @@ export default function CloudinaryImageManager({
       try {
         return getOptimizedImageUrl(image.public_id, { width: 400, height: 300 });
       } catch (error) {
-        console.warn('获取 Cloudinary 优化 URL 失败，使用原始 URL:', error);
+        // 获取 Cloudinary 优化 URL 失败，使用原始 URL
         return image.file_url || '';
       }
     }
@@ -204,7 +204,7 @@ export default function CloudinaryImageManager({
       try {
         return getThumbnailUrl(image.public_id);
       } catch (error) {
-        console.warn('获取 Cloudinary 缩略图失败，使用原始 URL:', error);
+        // 获取 Cloudinary 缩略图失败，使用原始 URL
         return image.file_url || '';
       }
     }
@@ -300,7 +300,7 @@ export default function CloudinaryImageManager({
                     className="w-full h-full object-cover"
                     loading="lazy"
                     onError={(e) => {
-                      console.warn('图片加载失败:', image);
+                      // 图片加载失败
                       e.target.style.display = 'none';
                       e.target.parentNode.innerHTML = '<div class="w-full h-full flex items-center justify-center text-gray-500 text-xs">图片加载失败</div>';
                     }}

@@ -7,16 +7,10 @@ import {
 
 // Cloudinary 图片上传
 const uploadToCloudinary = async (file) => {
-  console.log('=== Cloudinary 上传调试信息 ===');
-  console.log('Cloud Name:', CLOUDINARY_CONFIG.cloud_name);
-  console.log('Upload Preset:', CLOUDINARY_CONFIG.upload_preset);
-  console.log('配置状态:', isCloudinaryConfigured());
+  // Cloudinary 上传调试信息
   
   if (!isCloudinaryConfigured()) {
-    console.error('Cloudinary 配置不完整:', {
-      cloud_name: CLOUDINARY_CONFIG.cloud_name,
-      upload_preset: CLOUDINARY_CONFIG.upload_preset
-    });
+    // Cloudinary 配置不完整
     throw new Error('Cloudinary 未正确配置，请检查环境变量');
   }
 
@@ -34,19 +28,10 @@ const uploadToCloudinary = async (file) => {
   // formData.append('folder', 'scripture-slides/backgrounds');
   
   const uploadUrl = getCloudinaryUploadUrl();
-  console.log('上传 URL:', uploadUrl);
-  console.log('文件信息:', {
-    name: file.name,
-    size: file.size,
-    type: file.type
-  });
+  // 上传信息
 
   try {
-    console.log('开始上传到 Cloudinary...');
-    console.log('FormData 内容:');
-    for (let [key, value] of formData.entries()) {
-      console.log(`${key}: ${value}`);
-    }
+    // 开始上传到 Cloudinary
     
     const response = await fetch(uploadUrl, {
       method: 'POST',
@@ -54,24 +39,19 @@ const uploadToCloudinary = async (file) => {
       // 不要设置 Content-Type，让浏览器自动处理 multipart/form-data
     });
 
-    console.log('响应状态:', response.status);
-    console.log('响应头:', Object.fromEntries(response.headers.entries()));
+    // 响应信息
     
     if (!response.ok) {
       let errorData;
       try {
         errorData = await response.json();
-        console.error('Cloudinary 详细错误信息:', errorData);
+        // Cloudinary 详细错误信息
       } catch (e) {
         errorData = await response.text();
-        console.error('Cloudinary 错误文本:', errorData);
+        // Cloudinary 错误文本
       }
       
-      console.error('Cloudinary 响应错误:', {
-        status: response.status,
-        statusText: response.statusText,
-        errorData: errorData
-      });
+      // Cloudinary 响应错误
       
       let errorMessage = `Cloudinary 上传失败: ${response.status}`;
       if (errorData) {
@@ -86,7 +66,7 @@ const uploadToCloudinary = async (file) => {
     }
 
     const result = await response.json();
-    console.log('Cloudinary 上传成功:', result);
+    // Cloudinary 上传成功
     
     return {
       file_url: result.secure_url,
@@ -103,7 +83,7 @@ const uploadToCloudinary = async (file) => {
       provider: 'cloudinary'
     };
   } catch (error) {
-    console.error('Cloudinary 上传错误:', error);
+    // Cloudinary 上传错误
     throw new Error(`图片上传到云端失败: ${error.message}`);
   }
 };
@@ -167,7 +147,7 @@ export const UploadFile = base44?.integrations?.Core?.UploadFile || (async ({ fi
     try {
       return await uploadToCloudinary(file);
     } catch (cloudinaryError) {
-      console.warn('Cloudinary 上传失败，回退到本地存储:', cloudinaryError.message);
+      // Cloudinary 上传失败，回退到本地存储
       // 继续执行本地上传
     }
   }

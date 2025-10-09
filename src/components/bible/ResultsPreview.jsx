@@ -60,10 +60,7 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
     
     // 监控recentImages状态变化
     useEffect(() => {
-        // 只在开发环境中显示调试信息
-        if (process.env.NODE_ENV === 'development' && recentImages.length > 0) {
-            console.log('📊 图片列表更新:', recentImages.length, '张图片');
-        }
+        // 监控recentImages状态变化
     }, [recentImages]);
 
     // 清理localStorage中的过期数据
@@ -94,7 +91,7 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
                     try {
                         localStorage.removeItem(key);
                     } catch (e) {
-                        console.warn('清理失败:', key);
+                        // 清理失败
                     }
                 });
             }
@@ -115,7 +112,7 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
             }
             
         } catch (error) {
-            console.warn('清理localStorage失败:', error);
+            // 清理localStorage失败
         }
     };
 
@@ -138,7 +135,7 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
                             // 兼容旧的 Base64 数据
                             preview = `data:${img.file_type || 'image/jpeg'};base64,${img.image_data}`;
                         } else {
-                            console.warn('图片缺少显示数据，跳过:', img.name);
+                            // 图片缺少显示数据，跳过
                             return null;
                         }
                         
@@ -175,15 +172,15 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
                     });
                     
                     setRecentImages(cloudImages);
-                    console.log('✅ 从 Cloudinary 云端加载了', cloudImages.length, '张用户图片');
+                    // 从 Cloudinary 云端加载
                     return;
                 }
             } catch (cloudError) {
-                console.warn('Cloudinary 云端加载失败，将尝试本地备份:', cloudError);
-            }// ... existing code ...
+                // Cloudinary 云端加载失败，将尝试本地备份
+            }
             
             // 云端加载失败时，回退到本地存储（作为备份）
-            console.log('⚠️ 本地数据库不可用，加载备份数据...');
+            // 本地数据库不可用，加载备份数据
             const localHistory = localStorage.getItem('backgroundImageHistory');
             let validImages = [];
             
@@ -193,7 +190,7 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
                 for (const image of parsedHistory) {
                     // 跳过失效的blob URL
                     if (image.preview && image.preview.startsWith('blob:')) {
-                        console.warn('跳过失效的blob URL:', image.name);
+                        // 跳过失效的blob URL
                         continue;
                     }
                     
@@ -202,7 +199,7 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
                         if (image.thumbnailData) {
                             image.preview = image.thumbnailData;
                         } else {
-                            console.warn('图片缺少预览数据:', image.name);
+                            // 图片缺少预览数据
                             continue;
                         }
                     }
@@ -213,7 +210,7 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
                     });
                 }
                 
-                console.log('✅ 从本地备份加载了', validImages.length, '张图片');
+                // 从本地备份加载
             }
             
             // 尝试从旧的scripture_user_images中恢复数据
@@ -221,7 +218,7 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
                 const oldUserImages = localStorage.getItem('scripture_user_images');
                 if (oldUserImages) {
                     const oldImages = JSON.parse(oldUserImages);
-                    console.log('发现旧数据，尝试恢复:', oldImages.length, '张图片');
+                    // 发现旧数据，尝试恢复
                     
                     for (const oldImg of oldImages) {
                         // 检查是否已存在
@@ -243,13 +240,13 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
                             
                             if (recoveredImage.preview) {
                                 validImages.unshift(recoveredImage);
-                                console.log('✅ 成功恢复图片:', recoveredImage.name);
+                                // 成功恢复图片
                             }
                         }
                     }
                 }
             } catch (recoveryError) {
-                console.warn('数据恢复失败:', recoveryError);
+                // 数据恢复失败
             }
             
             setRecentImages(validImages);
@@ -259,11 +256,11 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
                 try {
                     localStorage.setItem('backgroundImageHistory', JSON.stringify(validImages.slice(0, 10)));
                 } catch (saveError) {
-                    console.warn('更新本地存储失败:', saveError);
+                    // 更新本地存储失败
                 }
             }
         } catch (e) {
-            console.warn("无法加载用户图片", e);
+            // 无法加载用户图片
             setRecentImages([]);
         }
     };
@@ -298,12 +295,12 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
                         try {
                             localStorage.removeItem(key);
                         } catch (e) {
-                            console.warn('清理localStorage项目失败:', key, e);
+                            // 清理localStorage项目失败
                         }
                     }
                 });
             } catch (cleanupError) {
-                console.warn('清理localStorage失败:', cleanupError);
+                // 清理localStorage失败
             }
             
             let history = [];
@@ -314,7 +311,7 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
                 try {
                     history = JSON.parse(existingHistory);
                 } catch (parseError) {
-                    console.warn('解析历史数据失败，清空重新开始:', parseError);
+                    // 解析历史数据失败，清空重新开始
                     history = [];
                     localStorage.removeItem(historyKey);
                 }
@@ -339,12 +336,12 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
                         canvas.height = 80;
                         ctx.drawImage(img, 0, 0, 80, 80);
                         miniThumbnail = canvas.toDataURL('image/jpeg', 0.3);
-                        console.log('🔹 超小缩略图创建完成，大小:', Math.round(miniThumbnail.length / 1024), 'KB');
+                        // 超小缩略图创建完成
                     };
                     
                     img.src = imageData.thumbnailData;
                 } catch (compressionError) {
-                    console.warn('创建超小缩略图失败:', compressionError);
+                    // 创建超小缩略图失败
                     miniThumbnail = imageData.thumbnailData;
                 }
             }
@@ -369,13 +366,13 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
             // 尝试保存
             try {
                 const dataToStore = JSON.stringify(history);
-                console.log('💾 准备保存数据大小:', Math.round(dataToStore.length / 1024), 'KB');
+                // 准备保存数据
                 localStorage.setItem(historyKey, dataToStore);
-                console.log('✅ 成功保存到localStorage');
+                // 成功保存到localStorage
             } catch (storageError) {
-                console.error('❌ localStorage保存失败:', storageError);
+                // localStorage保存失败
                 // 完全放弃localStorage，只使用内存
-                console.log('⚠️ 放弃localStorage，仅使用内存模式');
+                // 放弃localStorage，仅使用内存模式
             }
             
             // 更新内存状态（保留完整数据）
@@ -385,19 +382,14 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
                     ...imageData,
                     preview: imageData.preview || imageData.thumbnailData
                 };
-                console.log('🔄 正在更新recentImages状态:', {
-                    newImageId: newImage.id,
-                    newImageName: newImage.name,
-                    hasPreview: !!newImage.preview,
-                    previewType: newImage.preview ? (newImage.preview.startsWith('data:') ? 'base64' : 'other') : 'none'
-                });
+                // 正在更新recentImages状态
                 const updated = [newImage, ...filtered].slice(0, 5);
-                console.log('📊 recentImages即将更新为:', updated.length, '张图片');
+                // recentImages即将更新
                 return updated;
             });
             
         } catch (error) {
-            console.error('保存图片历史失败:', error);
+            // 保存图片历史失败
             // 完全依赖内存状态
             setRecentImages(prev => {
                 const filtered = prev.filter(img => img.id !== imageData.id);
@@ -490,12 +482,12 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
                 onBackgroundChange(cloudImage);
                 
                 // 不需要本地备份，因为数据已经存储在云端
-                console.log('✅ 图片已成功上传到 Cloudinary 云端存储');
+                // 图片已成功上传到 Cloudinary 云端存储
                 
                 alert('✅ 图片已成功上传到 Cloudinary 云端存储！在当前浏览器中永久保存。');
                 
             } catch (dbError) {
-                console.error('云端上传失败:', dbError);
+                // 云端上传失败
                 
                 // 云端上传失败，使用本地存储作为备选方案
                 const localImage = {
@@ -623,7 +615,7 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
                 try {
                     await UserImage.delete(image.id);
                 } catch (dbError) {
-                    console.warn('从数据库删除失败:', dbError);
+                    // 从数据库删除失败
                     // 即使数据库删除失败，也继续从本地删除
                 }
             }
@@ -650,7 +642,7 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
             
             alert('图片已成功删除！');
         } catch (error) {
-            console.error('删除图片失败:', error);
+            // 删除图片失败
             alert('删除失败，请稍后重试。');
         } finally {
             // 从正在删除的集合中移除
@@ -672,7 +664,7 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
         setRetryingImages(prev => new Set([...prev, image.id]));
 
         try {
-            console.log('🔄 重试将图片保存到云端:', image.name);
+            // 重试将图片保存到云端
             
             // 检查API是否可用
             if (!base44?.entities?.UserImage) {
@@ -691,7 +683,7 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
                 provider: 'database'
             });
             
-            console.log('✅ 重试成功，图片已保存到云端，ID:', savedImage.id);
+            // 重试成功，图片已保存到云端
             
             // 更新本地图片状态为云端状态
             const updatedImage = {

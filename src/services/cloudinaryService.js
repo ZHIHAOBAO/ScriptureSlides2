@@ -38,7 +38,7 @@ export const uploadImageToCloudinary = async (file, options = {}) => {
       formData.append('public_id', options.public_id);
     }
 
-    console.log('🔄 开始上传图片到 Cloudinary...');
+    // 开始上传图片到 Cloudinary
     
     // 上传到 Cloudinary
     const response = await fetch(getCloudinaryUploadUrl(), {
@@ -48,13 +48,13 @@ export const uploadImageToCloudinary = async (file, options = {}) => {
 
     if (!response.ok) {
       const errorData = await response.text();
-      console.error('Cloudinary 上传失败:', errorData);
+      // Cloudinary 上传失败
       throw new Error(`上传失败: ${response.status} ${response.statusText}`);
     }
 
     const result = await response.json();
     
-    console.log('✅ Cloudinary 上传成功:', result);
+    // Cloudinary 上传成功
     
     // 返回标准化的结果
     return {
@@ -74,7 +74,7 @@ export const uploadImageToCloudinary = async (file, options = {}) => {
     };
     
   } catch (error) {
-    console.error('上传图片到 Cloudinary 失败:', error);
+    // 上传图片到 Cloudinary 失败
     throw new Error(`上传失败: ${error.message}`);
   }
 };
@@ -86,21 +86,21 @@ export const uploadImageToCloudinary = async (file, options = {}) => {
  */
 export const deleteImageFromCloudinary = async (publicId) => {
   if (!isCloudinaryConfigured()) {
-    console.warn('Cloudinary 未配置，跳过删除操作');
+    // Cloudinary 未配置，跳过删除操作
     return true;
   }
 
   try {
     // 注意：删除操作需要服务器端 API，这里只是模拟
     // 在实际项目中，你需要创建一个服务器端接口来处理删除
-    console.log('🗑️ 删除 Cloudinary 图片:', publicId);
+    // 删除 Cloudinary 图片
     
     // 由于删除需要 API Secret，这里暂时返回成功
     // 实际实现需要后端 API
     return true;
     
   } catch (error) {
-    console.error('删除 Cloudinary 图片失败:', error);
+    // 删除 Cloudinary 图片失败
     return false;
   }
 };
@@ -130,7 +130,7 @@ export const uploadMultipleImages = async (files, options = {}) => {
     }));
     
   } catch (error) {
-    console.error('批量上传失败:', error);
+    // 批量上传失败
     throw error;
   }
 };
@@ -174,7 +174,7 @@ export const validateImageFile = (file) => {
  */
 export const listCloudinaryImages = async () => {
   if (!isCloudinaryConfigured()) {
-    console.warn('Cloudinary 未配置，返回空列表');
+    // Cloudinary 未配置，返回空列表
     return [];
   }
 
@@ -189,7 +189,7 @@ export const listCloudinaryImages = async () => {
       const data = await response.json();
       const images = data.resources || [];
       
-      console.log('✅ 从 Cloudinary 查询到', images.length, '张图片');
+      // 从 Cloudinary 查询到图片
       
       // 转换为标准格式
       return images.map(img => ({
@@ -211,12 +211,12 @@ export const listCloudinaryImages = async () => {
         optimized_url: getOptimizedImageUrl(img.public_id)
       }));
     } else {
-      console.warn('Cloudinary 查询失败:', response.status, response.statusText);
+      // Cloudinary 查询失败
       return [];
     }
     
   } catch (error) {
-    console.error('查询 Cloudinary 图片列表失败:', error);
+    // 查询 Cloudinary 图片列表失败
     return [];
   }
 };
