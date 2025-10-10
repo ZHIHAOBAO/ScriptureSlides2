@@ -852,229 +852,119 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
                         </div>
                     </div>
 
-                    {/* 背景图片替换区域 */}
+                    {/* 新的左右布局区域 */}
                     <div className="mt-6 pt-6 border-t border-gray-200">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <ImageIcon className="w-6 h-6 text-gray-600" />
-                                <div>
-                                    <h4 className="font-medium text-gray-800">当前演示文稿背景</h4>
-                                    <p className="text-xs text-gray-500 truncate max-w-xs">
-                                        {presentation.customBackgroundImage ? presentation.customBackgroundImage.name : "默认山景图"}
-                                    </p>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {/* 左侧：自定义背景 */}
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-3">
+                                    <ImageIcon className="w-6 h-6 text-gray-600" />
+                                    <div>
+                                        <h4 className="font-medium text-gray-800">自定义背景</h4>
+                                        <p className="text-xs text-gray-500">
+                                            {presentation.customBackgroundImage ? presentation.customBackgroundImage.name : "默认山景图"}
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                {/* 显示当前背景图片缩略图 */}
+                                <div className="grid grid-cols-2 gap-2">
+                                    {/* 默认背景 */}
+                                    <div
+                                        onClick={() => selectHistoryImage(null)}
+                                        className={`aspect-video rounded-md overflow-hidden cursor-pointer border-2 transition-all ${
+                                            !presentation.customBackgroundImage
+                                                ? 'border-blue-500 ring-2 ring-blue-200'
+                                                : 'border-gray-200 hover:border-blue-400'
+                                        }`}
+                                    >
+                                        <img src={defaultBg} alt="默认背景" className="w-full h-full object-cover" />
+                                    </div>
+                                    
+                                    {/* 当前选中的自定义背景或最近上传的图片 */}
+                                    {presentation.customBackgroundImage ? (
+                                        <div className="aspect-video rounded-md overflow-hidden border-2 border-blue-500 ring-2 ring-blue-200">
+                                            <img src={presentation.customBackgroundImage.preview} alt={presentation.customBackgroundImage.name} className="w-full h-full object-cover" />
+                                        </div>
+                                    ) : recentImages.length > 0 ? (
+                                        <div
+                                            onClick={() => selectHistoryImage(recentImages[0])}
+                                            className="aspect-video rounded-md overflow-hidden cursor-pointer border-2 border-gray-200 hover:border-blue-400 transition-all"
+                                        >
+                                            <img src={recentImages[0].preview} alt={recentImages[0].name} className="w-full h-full object-cover" />
+                                        </div>
+                                    ) : (
+                                        <div className="aspect-video rounded-md border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-xs">
+                                            无图片
+                                        </div>
+                                    )}
+                                </div>
+                                
+                                {/* 操作按钮 */}
+                                <div className="grid grid-cols-2 gap-2">
+                                    <Button asChild variant="outline" className="justify-start cursor-pointer">
+                                        <label htmlFor="background-upload-input" className="flex items-center cursor-pointer w-full">
+                                            {isUploadingBg ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
+                                            上传新图片
+                                        </label>
+                                    </Button>
+                                    <input
+                                        type="file"
+                                        id="background-upload-input"
+                                        className="hidden"
+                                        accept="image/*"
+                                        onChange={handleBackgroundFileChange}
+                                    />
+                                    
+                                    <Button variant="outline" className="justify-start">
+                                        <Database className="w-4 h-4 mr-2" />
+                                        社区图库
+                                    </Button>
                                 </div>
                             </div>
-
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button variant="outline">
-                                        <RefreshCw className="w-4 h-4 mr-2" />
-                                        更换背景
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-80">
-                                    <div className="grid gap-4">
-                                        <div className="space-y-2">
-                                            <h4 className="font-medium leading-none">更换背景图片</h4>
-                                            <p className="text-sm text-muted-foreground">
-                                                上传新图片或从可用背景中选择。
-                                            </p>
-                                        </div>
-                                        <div className="grid gap-2">
-                                            <Button asChild variant="outline" className="w-full justify-start cursor-pointer">
-                                                <label htmlFor="background-replace-input-popover" className="flex items-center cursor-pointer w-full">
-                                                    {isUploadingBg ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
-                                                    上传新图片
-                                                </label>
-                                            </Button>
-                                            <input
-                                                type="file"
-                                                id="background-replace-input-popover"
-                                                className="hidden"
-                                                accept="image/*"
-                                                onChange={handleBackgroundFileChange}
-                                            />
-                                            
-
-
-                                            <div className="mt-4 pt-4 border-t">
-                                                <div className="flex items-center justify-between mb-3">
-                                                    <div className="flex items-center gap-2">
-                                                        <h5 className="text-sm font-medium text-gray-700">背景选择</h5>
-                                                        <span className="text-xs text-gray-500">(共 {recentImages.length} 张)</span>
-                                                    </div>
-                                                    {recentImages.length > 6 && (
-                                                        <Button
-                                                            variant="link"
-                                                            size="sm"
-                                                            className="p-0 h-auto text-xs text-blue-600"
-                                                            onClick={() => setShowAllImages(!showAllImages)}
-                                                        >
-                                                            {showAllImages ? '显示少一些' : `查看全部 ${recentImages.length} 张`}
-                                                        </Button>
-                                                    )}
-                                                </div>
-                                                
-                                                {/* 根据 showAllImages 状态显示不同数量的图片 */}
-                                                <div className={`grid gap-2 ${
-                                                    showAllImages ? 'grid-cols-3 max-h-64 overflow-y-auto' : 'grid-cols-2'
-                                                }`}>
-                                                    {/* Default Image */}
-                                                    <div
-                                                        key="default-bg"
-                                                        onClick={() => selectHistoryImage(null)} // Reset to default
-                                                        className={`group relative aspect-video rounded-md overflow-hidden cursor-pointer border-2 transition-all ${
-                                                            !presentation.customBackgroundImage
-                                                                ? 'border-blue-500 ring-2 ring-blue-200'
-                                                                : 'border-gray-200 hover:border-blue-400'
-                                                        }`}
-                                                    >
-                                                        <img src={defaultBg} alt="默认背景" className="w-full h-full object-cover" />
-                                                        {!presentation.customBackgroundImage && (
-                                                            <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
-                                                                <CheckCircle2 className="w-3 h-3 text-white" />
-                                                            </div>
-                                                        )}
-                                                        <div className="absolute bottom-0 inset-x-0 p-1 bg-black/50 text-white text-[10px] text-center">
-                                                            默认山景图
-                                                        </div>
-                                                    </div>
-
-                                                    {/* 显示用户上传的图片 */}
-                                                    {(showAllImages ? recentImages : recentImages.slice(0, showAllImages ? recentImages.length : 5)).map((image, index) => (
-                                                        <div
-                                                            key={image.id || `results-image-${index}-${image.name}`}
-                                                            className={`group relative aspect-video rounded-md overflow-hidden cursor-pointer border-2 transition-all ${
-                                                                presentation.customBackgroundImage?.preview === image.preview
-                                                                    ? 'border-blue-500 ring-2 ring-blue-200 shadow-lg'
-                                                                    : 'border-gray-200 hover:border-blue-400 hover:shadow-md'
-                                                            }`}
-                                                        >
-                                                            <div onClick={() => { selectHistoryImage(image) }} className="w-full h-full">
-                                                                <img src={image.preview} alt={image.name} className="w-full h-full object-cover" />
-                                                                
-                                                                {/* 选中状态指示器 */}
-                                                                {presentation.customBackgroundImage?.preview === image.preview && (
-                                                                    <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
-                                                                        <CheckCircle2 className="w-3 h-3 text-white" />
-                                                                    </div>
-                                                                )}
-                                                                
-                                                                {/* 图片信息悬浮提示 */}
-                                                                <div className="absolute bottom-0 inset-x-0 p-1 bg-black/50 text-white text-[10px] text-center truncate">
-                                                                    <div className="flex items-center justify-center gap-1">
-                                                                        <span>{image.name || '上传的图片'}</span>
-                                                                        {image.isPersistent && image.isCloud && (
-                                                                            <span className="inline-flex items-center px-1 py-0.5 rounded text-[8px] bg-blue-600 text-white" title="已上传到 Cloudinary 云端存储">
-                                                                                云端
-                                                                            </span>
-                                                                        )}
-                                                                        {!image.isPersistent && image.needsRetry && (
-                                                                            <span className="inline-flex items-center px-1 py-0.5 rounded text-[8px] bg-orange-600 text-white" title="仅本地存储，点击重试上传到云端">
-                                                                                临时
-                                                                            </span>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            
-                                                            {/* 重试保存到云端按钮 */}
-                                                            {!image.isPersistent && image.needsRetry && image.base64Data && (
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        retryImageToDatabase(image);
-                                                                    }}
-                                                                    disabled={retryingImages.has(image.id)}
-                                                                    className="absolute top-1 left-1 p-1 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                                                                    title="重试上传到云端"
-                                                                >
-                                                                    {retryingImages.has(image.id) ? (
-                                                                        <Loader2 className="w-3 h-3 animate-spin" />
-                                                                    ) : (
-                                                                        <Database className="w-3 h-3" />
-                                                                    )}
-                                                                </button>
-                                                            )}
-                                                            
-                                                            {/* 存储状态标记 */}
-                                                            {image.isPersistent && image.isCloud ? (
-                                                                <div className="absolute top-1 left-1 p-1 bg-blue-500 rounded-full text-white z-10" title="已上传到 Cloudinary 云端存储">
-                                                                    <Database className="w-3 h-3" />
-                                                                </div>
-                                                            ) : (
-                                                                <div className="absolute top-1 left-1 p-1 bg-orange-500 rounded-full text-white z-10" title="仅本地存储，建议上传到云端">
-                                                                    <Wifi className="w-3 h-3" />
-                                                                </div>
-                                                            )}
-                                                            
-                                                            
-                                                            {/* 删除按钮 */}
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    deleteImage(image);
-                                                                }}
-                                                                disabled={deletingImages.has(image.id)}
-                                                                className="absolute bottom-1 right-1 p-1 bg-red-500 hover:bg-red-600 disabled:bg-gray-400 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                                                                title="删除图片"
-                                                            >
-                                                                {deletingImages.has(image.id) ? (
-                                                                    <Loader2 className="w-3 h-3 animate-spin" />
-                                                                ) : (
-                                                                    <Trash2 className="w-3 h-3" />
-                                                                )}
-                                                            </button>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                                
-                                                {/* 提示信息 */}
-                                                {!showAllImages && recentImages.length > 5 && (
-                                                    <p className="text-xs text-gray-500 mt-2 text-center">
-                                                        显示最近的 5 张图片，点击上方查看全部 {recentImages.length} 张
-                                                    </p>
-                                                )}
-                                                {recentImages.length === 0 && (
-                                                    <div className="text-xs text-gray-400 mt-2 text-center space-y-1">
-                                                        <p>暂无上传的图片，请先上传图片</p>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
+                            
+                            {/* 右侧：操作区域 */}
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-3">
+                                    <Download className="w-6 h-6 text-gray-600" />
+                                    <div>
+                                        <h4 className="font-medium text-gray-800">操作</h4>
+                                        <p className="text-xs text-gray-500">
+                                            下载或重新创建传道演示文稿
+                                        </p>
                                     </div>
-                                </PopoverContent>
-                            </Popover>
+                                </div>
+                                
+                                <div className="space-y-3">
+                                    <Button
+                                        onClick={onDownload}
+                                        className="w-full h-12 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white rounded-xl"
+                                        disabled={isDownloading}
+                                    >
+                                        {isDownloading ? (
+                                            <>
+                                                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                                正在生成...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Download className="w-5 h-5 mr-2" />
+                                                下载演示文稿
+                                            </>
+                                        )}
+                                    </Button>
+                                    <Button
+                                        onClick={onStartNew}
+                                        variant="outline"
+                                        className="w-full h-12 border-2 rounded-xl"
+                                        disabled={isDownloading}
+                                    >
+                                        <RotateCcw className="w-5 h-5 mr-2" />
+                                        创建新的
+                                    </Button>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-
-                    <div className="flex gap-3 pt-4">
-                        <Button
-                            onClick={onDownload}
-                            className="flex-1 h-12 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white rounded-xl"
-                            disabled={isDownloading}
-                        >
-                            {isDownloading ? (
-                                <>
-                                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                                    正在生成...
-                                </>
-                            ) : (
-                                <>
-                                    <Download className="w-5 h-5 mr-2" />
-                                    下载演示文稿 (.pptx)
-                                </>
-                            )}
-                        </Button>
-                        <Button
-                            onClick={onStartNew}
-                            variant="outline"
-                            className="h-12 px-6 border-2 rounded-xl"
-                            disabled={isDownloading}
-                        >
-                            <RotateCcw className="w-5 h-5 mr-2" />
-                            创建新的
-                        </Button>
                     </div>
 
                     <div className="mt-4 text-xs text-gray-500 text-center">
