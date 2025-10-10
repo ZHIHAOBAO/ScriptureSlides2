@@ -866,70 +866,115 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
                                     </div>
                                 </div>
                                 
-                                {/* 显示所有可用背景图片的缩略图网格 */}
-                                <div className="grid grid-cols-4 gap-2">
-                                    {/* 默认背景 */}
-                                    <div
-                                        onClick={() => selectHistoryImage(null)}
-                                        className={`aspect-square rounded-md overflow-hidden cursor-pointer border-2 transition-all ${
-                                            !presentation.customBackgroundImage
-                                                ? 'border-blue-500 ring-2 ring-blue-200'
-                                                : 'border-gray-200 hover:border-blue-400'
-                                        }`}
-                                        title="默认山景背景"
-                                    >
-                                        <img src={defaultBg} alt="默认背景" className="w-full h-full object-cover" />
-                                    </div>
+                                {/* 横向滚动的背景图片选择器 */}
+                                <div className="relative">
+                                    {/* 左箭头 */}
+                                    {recentImages.length >= 4 && (
+                                        <Button
+                                            variant="outline"
+                                            size="icon"
+                                            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-md h-8 w-8"
+                                            onClick={() => {
+                                                const container = document.getElementById('background-images-container');
+                                                if (container) {
+                                                    container.scrollBy({ left: -120, behavior: 'smooth' });
+                                                }
+                                            }}
+                                        >
+                                            <ChevronLeft className="w-4 h-4" />
+                                        </Button>
+                                    )}
                                     
-                                    {/* 显示最近上传的图片 */}
-                                    {recentImages.slice(0, 7).map((image, index) => (
+                                    {/* 图片滚动容器 */}
+                                    <div 
+                                        id="background-images-container"
+                                        className="flex gap-2 overflow-x-auto scrollbar-hide px-1 py-1"
+                                        style={{
+                                            scrollbarWidth: 'none',
+                                            msOverflowStyle: 'none',
+                                            WebkitScrollbar: { display: 'none' }
+                                        }}
+                                    >
+                                        {/* 默认背景 */}
                                         <div
-                                            key={image.id}
-                                            className={`aspect-square rounded-md overflow-hidden cursor-pointer border-2 transition-all relative group ${
-                                                presentation.customBackgroundImage?.id === image.id
+                                            onClick={() => selectHistoryImage(null)}
+                                            className={`flex-shrink-0 aspect-square w-20 rounded-md overflow-hidden cursor-pointer border-2 transition-all ${
+                                                !presentation.customBackgroundImage
                                                     ? 'border-blue-500 ring-2 ring-blue-200'
                                                     : 'border-gray-200 hover:border-blue-400'
                                             }`}
-                                            title={image.name}
+                                            title="默认山景背景"
                                         >
-                                            <img 
-                                                src={image.preview} 
-                                                alt={image.name} 
-                                                className="w-full h-full object-cover" 
-                                                onClick={() => selectHistoryImage(image)}
-                                            />
-                                            
-                                            {/* 删除按钮 - 只在hover时显示 */}
-                                            <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <Button
-                                                    size="icon"
-                                                    variant="destructive"
-                                                    className="h-6 w-6 shadow-lg"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        deleteImage(image);
-                                                    }}
-                                                    disabled={deletingImages.has(image.id)}
-                                                    title="删除图片"
-                                                >
-                                                    {deletingImages.has(image.id) ? (
-                                                        <Loader2 className="w-3 h-3 animate-spin" />
-                                                    ) : (
-                                                        <Trash2 className="w-3 h-3" />
-                                                    )}
-                                                </Button>
-                                            </div>
+                                            <img src={defaultBg} alt="默认背景" className="w-full h-full object-cover" />
                                         </div>
-                                    ))}
+                                        
+                                        {/* 显示所有上传的图片 */}
+                                        {recentImages.map((image, index) => (
+                                            <div
+                                                key={image.id}
+                                                className={`flex-shrink-0 aspect-square w-20 rounded-md overflow-hidden cursor-pointer border-2 transition-all relative group ${
+                                                    presentation.customBackgroundImage?.id === image.id
+                                                        ? 'border-blue-500 ring-2 ring-blue-200'
+                                                        : 'border-gray-200 hover:border-blue-400'
+                                                }`}
+                                                title={image.name}
+                                            >
+                                                <img 
+                                                    src={image.preview} 
+                                                    alt={image.name} 
+                                                    className="w-full h-full object-cover" 
+                                                    onClick={() => selectHistoryImage(image)}
+                                                />
+                                                
+                                                {/* 删除按钮 - 只在hover时显示 */}
+                                                <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <Button
+                                                        size="icon"
+                                                        variant="destructive"
+                                                        className="h-5 w-5 shadow-lg"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            deleteImage(image);
+                                                        }}
+                                                        disabled={deletingImages.has(image.id)}
+                                                        title="删除图片"
+                                                    >
+                                                        {deletingImages.has(image.id) ? (
+                                                            <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                                                        ) : (
+                                                            <Trash2 className="w-2.5 h-2.5" />
+                                                        )}
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        
+                                        {/* 如果没有图片，显示占位符 */}
+                                        {recentImages.length === 0 && (
+                                            <div className="flex-shrink-0 aspect-square w-20 rounded-md border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-xs">
+                                                <div className="text-center">
+                                                    <Upload className="w-3 h-3 mx-auto mb-0.5" />
+                                                    <div className="text-[10px]">上传</div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                     
-                                    {/* 如果没有图片，显示占位符 */}
-                                    {recentImages.length === 0 && (
-                                        <div className="aspect-square rounded-md border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-xs">
-                                            <div className="text-center">
-                                                <Upload className="w-4 h-4 mx-auto mb-1" />
-                                                <div>上传图片</div>
-                                            </div>
-                                        </div>
+                                    {/* 右箭头 */}
+                                    {recentImages.length >= 4 && (
+                                        <Button
+                                            variant="outline"
+                                            size="icon"
+                                            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-md h-8 w-8"
+                                            onClick={() => {
+                                                const container = document.getElementById('background-images-container');
+                                                if (container) {
+                                                    container.scrollBy({ left: 120, behavior: 'smooth' });
+                                                }
+                                            }}
+                                        >
+                                            <ChevronRight className="w-4 h-4" />
+                                        </Button>
                                     )}
                                 </div>
                                 
