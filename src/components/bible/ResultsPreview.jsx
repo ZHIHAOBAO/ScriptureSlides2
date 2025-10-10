@@ -22,7 +22,6 @@ import {
     RefreshCw,
     Upload,
     CheckCircle2,
-    Database,
     Wifi,
     Trash2,
     X
@@ -901,8 +900,8 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
                                 </div>
                                 
                                 {/* 操作按钮 */}
-                                <div className="grid grid-cols-2 gap-2">
-                                    <Button asChild variant="outline" className="justify-start cursor-pointer">
+                                <div>
+                                    <Button asChild variant="outline" className="justify-start cursor-pointer w-full">
                                         <label htmlFor="background-upload-input" className="flex items-center cursor-pointer w-full">
                                             {isUploadingBg ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
                                             上传新图片
@@ -915,11 +914,6 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
                                         accept="image/*"
                                         onChange={handleBackgroundFileChange}
                                     />
-                                    
-                                    <Button variant="outline" className="justify-start">
-                                        <Database className="w-4 h-4 mr-2" />
-                                        社区图库
-                                    </Button>
                                 </div>
                             </div>
                             
