@@ -484,7 +484,7 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
                 // 不需要本地备份，因为数据已经存储在云端
                 // 图片已成功上传到 Cloudinary 云端存储
                 
-                alert('✅ 图片已成功上传到 Cloudinary 云端存储！在当前浏览器中永久保存。');
+                // 图片已成功上传到 Cloudinary 云端存储
                 
             } catch (dbError) {
                 // 云端上传失败
@@ -518,12 +518,7 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
                 // 应用为当前背景
                 onBackgroundChange(localImage);
                 
-                // 提供友好的错误提示
-                if (dbError.message.includes('云端服务不可用')) {
-                    alert('⚠️ 图片已保存到本地。云端连接失败，您可以稍后点击蓝色重试按钮上传到云端。');
-                } else {
-                    alert('⚠️ 图片已保存到本地。云端上传失败，请稍后重试或检查网络连接。');
-                }
+                // 图片已保存到本地
             }
 
         } catch (err) {
@@ -640,7 +635,7 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
                 onBackgroundChange(null);
             }
             
-            alert('图片已成功删除！');
+            // 图片已成功删除
         } catch (error) {
             // 删除图片失败
             alert('删除失败，请稍后重试。');
@@ -706,7 +701,7 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
             // 重新加载云端数据确保一致性
             await loadUserImages();
             
-            alert('✅ 重试成功！图片已保存到云端，现在可以永久使用和跨设备访问。');
+            // 重试成功！图片已保存到云端
         } catch (error) {
             console.error('🚫 重试保存到云端失败:', error);
             alert('⚠️ 重试失败，请检查网络连接后再试。');
