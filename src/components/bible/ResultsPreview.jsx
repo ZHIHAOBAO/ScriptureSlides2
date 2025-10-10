@@ -866,35 +866,69 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
                                     </div>
                                 </div>
                                 
-                                {/* 显示当前背景图片缩略图 */}
-                                <div className="grid grid-cols-2 gap-2">
+                                {/* 显示所有可用背景图片的缩略图网格 */}
+                                <div className="grid grid-cols-4 gap-2">
                                     {/* 默认背景 */}
                                     <div
                                         onClick={() => selectHistoryImage(null)}
-                                        className={`aspect-video rounded-md overflow-hidden cursor-pointer border-2 transition-all ${
+                                        className={`aspect-square rounded-md overflow-hidden cursor-pointer border-2 transition-all ${
                                             !presentation.customBackgroundImage
                                                 ? 'border-blue-500 ring-2 ring-blue-200'
                                                 : 'border-gray-200 hover:border-blue-400'
                                         }`}
+                                        title="默认山景背景"
                                     >
                                         <img src={defaultBg} alt="默认背景" className="w-full h-full object-cover" />
                                     </div>
                                     
-                                    {/* 当前选中的自定义背景或最近上传的图片 */}
-                                    {presentation.customBackgroundImage ? (
-                                        <div className="aspect-video rounded-md overflow-hidden border-2 border-blue-500 ring-2 ring-blue-200">
-                                            <img src={presentation.customBackgroundImage.preview} alt={presentation.customBackgroundImage.name} className="w-full h-full object-cover" />
-                                        </div>
-                                    ) : recentImages.length > 0 ? (
+                                    {/* 显示最近上传的图片 */}
+                                    {recentImages.slice(0, 7).map((image, index) => (
                                         <div
-                                            onClick={() => selectHistoryImage(recentImages[0])}
-                                            className="aspect-video rounded-md overflow-hidden cursor-pointer border-2 border-gray-200 hover:border-blue-400 transition-all"
+                                            key={image.id}
+                                            className={`aspect-square rounded-md overflow-hidden cursor-pointer border-2 transition-all relative group ${
+                                                presentation.customBackgroundImage?.id === image.id
+                                                    ? 'border-blue-500 ring-2 ring-blue-200'
+                                                    : 'border-gray-200 hover:border-blue-400'
+                                            }`}
+                                            title={image.name}
                                         >
-                                            <img src={recentImages[0].preview} alt={recentImages[0].name} className="w-full h-full object-cover" />
+                                            <img 
+                                                src={image.preview} 
+                                                alt={image.name} 
+                                                className="w-full h-full object-cover" 
+                                                onClick={() => selectHistoryImage(image)}
+                                            />
+                                            
+                                            {/* 删除按钮 - 只在hover时显示 */}
+                                            <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <Button
+                                                    size="icon"
+                                                    variant="destructive"
+                                                    className="h-6 w-6 shadow-lg"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        deleteImage(image);
+                                                    }}
+                                                    disabled={deletingImages.has(image.id)}
+                                                    title="删除图片"
+                                                >
+                                                    {deletingImages.has(image.id) ? (
+                                                        <Loader2 className="w-3 h-3 animate-spin" />
+                                                    ) : (
+                                                        <Trash2 className="w-3 h-3" />
+                                                    )}
+                                                </Button>
+                                            </div>
                                         </div>
-                                    ) : (
-                                        <div className="aspect-video rounded-md border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-xs">
-                                            无图片
+                                    ))}
+                                    
+                                    {/* 如果没有图片，显示占位符 */}
+                                    {recentImages.length === 0 && (
+                                        <div className="aspect-square rounded-md border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-xs">
+                                            <div className="text-center">
+                                                <Upload className="w-4 h-4 mx-auto mb-1" />
+                                                <div>上传图片</div>
+                                            </div>
                                         </div>
                                     )}
                                 </div>
