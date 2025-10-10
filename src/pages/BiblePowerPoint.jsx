@@ -80,15 +80,63 @@ export default function BiblePowerPointPage() {
 
     const loadRecentPresentations = async () => {
         try {
-            // 使用降级模式，直接返回空数组
-            // 使用降级模式，跳过历史演示文稿加载
-            setRecentPresentations([]);
-            return;
-            
+            // 从本地存储中加载最近的搜索历史
+            const searchHistory = localStorage.getItem('bible_search_history');
+            if (searchHistory) {
+                const history = JSON.parse(searchHistory);
+                // 转换为所需的格式
+                const recentPresentations = history.map(item => ({
+                    id: item.id || 'local-' + Date.now(),
+                    passage_reference: item.passage_reference,
+                    search_query: item.search_query,
+                    created_date: item.created_date || new Date().toISOString()
+                }));
+                setRecentPresentations(recentPresentations.slice(0, 5)); // 只显示最近5个
+            } else {
+                setRecentPresentations([]);
+            }
         } catch (err) {
-            console.warn("加载最近的演示文稿时出错:", err);
-            // 不设置错误状态，因为这不是关键功能
-            setRecentPresentations([]); // 设置为空数组
+            // 加载历史记录失败
+            setRecentPresentations([]);
+        }
+    };
+
+    // 保存搜索历史到本地存储
+    const saveSearchHistory = (searchQuery, passageReference) => {
+        try {
+            const historyKey = 'bible_search_history';
+            let history = [];
+            
+            // 获取现有历史
+            const existingHistory = localStorage.getItem(historyKey);
+            if (existingHistory) {
+                history = JSON.parse(existingHistory);
+            }
+            
+            // 创建新的历史记录
+            const newRecord = {
+                id: 'local-' + Date.now(),
+                search_query: searchQuery,
+                passage_reference: passageReference,
+                created_date: new Date().toISOString()
+            };
+            
+            // 删除相同的搜索记录（避免重复）
+            history = history.filter(item => 
+                item.search_query !== searchQuery && 
+                item.passage_reference !== passageReference
+            );
+            
+            // 添加新记录到开头
+            history.unshift(newRecord);
+            
+            // 只保存最近10个记录
+            history = history.slice(0, 10);
+            
+            // 保存到localStorage
+            localStorage.setItem(historyKey, JSON.stringify(history));
+        } catch (error) {
+            // 保存历史记录失败
         }
     };
 
@@ -786,6 +834,12 @@ export default function BiblePowerPointPage() {
                 slideContent: slideContent.slides,
                 customBackgroundImage: customImage 
             });
+
+            // 保存搜索历史
+            saveSearchHistory(query, finalReference);
+            
+            // 更新历史列表
+            await loadRecentPresentations();
 
         } catch (err) {
             console.error("生成演示文稿时发生错误:", err);

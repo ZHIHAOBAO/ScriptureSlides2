@@ -872,8 +872,8 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
                                     {recentImages.length >= 4 && (
                                         <Button
                                             variant="outline"
-                                            size="icon"
-                                            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 rounded-full bg-white/50 hover:bg-white/80 backdrop-blur-sm shadow-md"
+                                            size="sm"
+                                            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 rounded-full bg-white/50 hover:bg-white/80 backdrop-blur-sm shadow-md h-7 w-7"
                                             onClick={() => {
                                                 const container = document.getElementById('background-images-container');
                                                 if (container) {
@@ -881,7 +881,7 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
                                                 }
                                             }}
                                         >
-                                            <ChevronLeft className="w-5 h-5" />
+                                            <ChevronLeft className="w-4 h-4" />
                                         </Button>
                                     )}
                                     
@@ -964,8 +964,8 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
                                     {recentImages.length >= 4 && (
                                         <Button
                                             variant="outline"
-                                            size="icon"
-                                            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 rounded-full bg-white/50 hover:bg-white/80 backdrop-blur-sm shadow-md"
+                                            size="sm"
+                                            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 rounded-full bg-white/50 hover:bg-white/80 backdrop-blur-sm shadow-md h-7 w-7"
                                             onClick={() => {
                                                 const container = document.getElementById('background-images-container');
                                                 if (container) {
@@ -973,7 +973,7 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
                                                 }
                                             }}
                                         >
-                                            <ChevronRight className="w-5 h-5" />
+                                            <ChevronRight className="w-4 h-4" />
                                         </Button>
                                     )}
                                 </div>
@@ -1007,6 +1007,9 @@ export default function ResultsPreview({ presentation, onDownload, isDownloading
                                         </p>
                                     </div>
                                 </div>
+                                
+                                {/* 与左侧图片选择器对齐的间距 */}
+                                <div className="h-4"></div>
                                 
                                 <div className="space-y-3">
                                     <Button
